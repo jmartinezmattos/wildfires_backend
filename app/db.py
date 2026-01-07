@@ -20,7 +20,25 @@ class CloudSQLClient:
                 "port": int(db_config["port"]),
             }
 
-    def fetch_between_dates(self, table, start_date, end_date, fire=True):
+    def fetch_table_to_geojson(self, table):
+
+        conn = mysql.connector.connect(**self.config)
+        cursor = conn.cursor(dictionary=True)
+
+        sql = f"SELECT * FROM {table}"
+
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        serialized_rows = [serialize_row(r) for r in rows]
+        geo_jsons = convert_to_geojson(serialized_rows)
+
+        return geo_jsons
+
+    def fetch_between_dates(self, table, start_date, end_date, fire=False):
         """
         Devuelve los registros de la tabla entre dos fechas.
         Convierte datetime / date / timedelta a string para JSON.

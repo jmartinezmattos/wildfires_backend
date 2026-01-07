@@ -17,6 +17,14 @@ DB_CONFIG = {
 TABLE_NAME = os.getenv("MYSQL_FIRMS_TABLE", "firms")
 db_client = CloudSQLClient(DB_CONFIG)
 
+@bp.route("/uru_training_data", methods=["GET"])
+def get_uru_training_data():
+
+    results = db_client.fetch_table_to_geojson("training_uruguay_fire")
+
+    return jsonify({"count": len(results), "data": results}), 200
+
+
 @bp.route("/firms", methods=["GET"])
 def get_firms():
     start_date = request.args.get("start_date")
