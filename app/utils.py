@@ -1,7 +1,4 @@
 from datetime import date, datetime, timedelta
-from google.cloud import storage
-
-client = storage.Client()
 
 def serialize_row(row):
         """
