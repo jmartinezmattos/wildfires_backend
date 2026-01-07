@@ -5,7 +5,6 @@ import os
 
 bp = Blueprint("routes", __name__)
 
-# Config DB desde variables de entorno
 DB_CONFIG = {
     "user": os.getenv("MYSQL_USER"),
     "password": os.getenv("MYSQL_PASSWORD"),
@@ -22,6 +21,7 @@ db_client = CloudSQLClient(DB_CONFIG)
 def get_firms():
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
+    fire = request.args.get("fire", "true").lower() == "true"  # opcional, por defecto True
 
     if not start_date or not end_date:
         return jsonify({"error": "start_date y end_date son obligatorios"}), 400
@@ -36,7 +36,8 @@ def get_firms():
         results = db_client.fetch_between_dates(
             table=TABLE_NAME,
             start_date=start_date,
-            end_date=end_date
+            end_date=end_date,
+            fire=fire
         )
         return jsonify({"count": len(results), "data": results}), 200
     except Exception as e:

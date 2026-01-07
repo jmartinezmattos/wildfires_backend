@@ -1,6 +1,5 @@
 import mysql.connector
-from mysql.connector import Error
-from .utils import serialize_row
+from .utils import serialize_row, convert_to_geojson
 
 
 class CloudSQLClient:
@@ -21,26 +20,31 @@ class CloudSQLClient:
                 "port": int(db_config["port"]),
             }
 
-    def fetch_between_dates(self, table, start_date, end_date):
+    def fetch_between_dates(self, table, start_date, end_date, fire=True):
         """
         Devuelve los registros de la tabla entre dos fechas.
         Convierte datetime / date / timedelta a string para JSON.
         """
+
         conn = mysql.connector.connect(**self.config)
         cursor = conn.cursor(dictionary=True)
 
-        sql = f"""
-        SELECT *
-        FROM {table}
-        WHERE firms_datetime BETWEEN %s AND %s
-        ORDER BY firms_datetime ASC
-        """
+        sql = f"SELECT * FROM {table} WHERE firms_datetime BETWEEN %s AND %s"
+        params = [start_date, end_date]
 
-        cursor.execute(sql, (start_date, end_date))
+        if fire:
+            sql += " AND prediction = %s"
+            params.append("Fire")
+
+        sql += " ORDER BY firms_datetime ASC"
+
+        cursor.execute(sql, params)
         rows = cursor.fetchall()
 
         cursor.close()
         conn.close()
 
-        # Serializamos los resultados para JSON
-        return [serialize_row(r) for r in rows]
+        serialized_rows = [serialize_row(r) for r in rows]
+        geo_jsons = convert_to_geojson(serialized_rows)
+
+        return geo_jsons
