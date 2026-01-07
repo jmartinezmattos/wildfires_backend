@@ -1,0 +1,6 @@
+config/.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+cloud-sql-proxy.x64.exe
