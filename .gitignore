@@ -4,3 +4,4 @@ venv/
 __pycache__/
 *.pyc
 cloud-sql-proxy.x64.exe
+config/service_accounts

@@ -1,4 +1,31 @@
+import os
 from datetime import date, datetime, timedelta
+from google.cloud import storage
+
+SA_PATH = os.getenv("SA_PATH")
+
+if SA_PATH and SA_PATH.endswith(".json"):
+    client = storage.Client.from_service_account_json(SA_PATH)
+else:
+    client = storage.Client()
+
+def generate_signed_url(gcs_path: str, expiration_minutes: int = 60) -> str:
+    """
+    gcs_path: 'gs://bucket_name/path/to/file.png'
+    expiration_minutes: duración del URL firmado
+    """
+    if not gcs_path.startswith("gs://"):
+        return None
+
+    path_parts = gcs_path[5:].split("/", 1)
+    bucket_name = path_parts[0]
+    blob_name = path_parts[1]
+
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+
+    url = blob.generate_signed_url(expiration=timedelta(minutes=expiration_minutes))
+    return url
 
 def serialize_row(row):
         """

@@ -1,5 +1,5 @@
 import mysql.connector
-from .utils import serialize_row, convert_to_geojson
+from .utils import serialize_row, convert_to_geojson, generate_signed_url
 
 
 class CloudSQLClient:
@@ -25,7 +25,7 @@ class CloudSQLClient:
         conn = mysql.connector.connect(**self.config)
         cursor = conn.cursor(dictionary=True)
 
-        sql = f"SELECT * FROM {table}"
+        sql = f"SELECT * FROM {table} limit"
 
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -34,6 +34,22 @@ class CloudSQLClient:
         conn.close()
 
         serialized_rows = [serialize_row(r) for r in rows]
+
+        print(serialized_rows)
+        
+        for row in serialized_rows:
+
+            gcs_path = row.get("gcs_path")
+            
+            if gcs_path:
+                try:
+                    row["signed_gcs_url"] = generate_signed_url(gcs_path)
+                except Exception as e:
+                    print("Error generating signed URL: ", e)
+                    row["signed_gcs_url"] = None
+            else:
+                row["signed_gcs_url"] = None
+
         geo_jsons = convert_to_geojson(serialized_rows)
 
         return geo_jsons
